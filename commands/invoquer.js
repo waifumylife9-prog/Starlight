@@ -7,13 +7,13 @@ const { RARETES } = require('../config');
 
 // Liste de noms de waifus selon la rareté
 const NOMS_WAIFUS = {
-    COMMUNE: ['Luna', 'Nova', 'Aria', 'Zara', 'Mira'],
-    PEU_COMMUNE: ['Lyra', 'Vega', 'Nyx', 'Sera', 'Kira'],
-    RARE: ['Astra', 'Celeste', 'Iris', 'Ember', 'Frost'],
-    EPIQUE: ['Seraph', 'Eclipse', 'Phantom', 'Storm', 'Blaze'],
-    LEGENDAIRE: ['Nebula', 'Aurora', 'Zenith', 'Apex', 'Solaris'],
-    MYTHIQUE: ['Void', 'Eternity', 'Genesis', 'Oblivion', 'Infinity'],
-    WAIFU: ['Starlight', 'Moonrise', 'Dawnbreak'],
+    COMMUNE: [],
+    PEU_COMMUNE: [],
+    RARE: [],
+    EPIQUE: [],
+    LEGENDAIRE: [],
+    MYTHIQUE: [],
+    WAIFU: [],
 };
 
 module.exports = {
