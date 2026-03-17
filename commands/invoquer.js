@@ -4,17 +4,7 @@ const Waifu = require('../models/Waifu');
 const Base = require('../models/Base');
 const { tirerRarete, genererStats } = require('../utils/gacha');
 const { RARETES } = require('../config');
-
-// Liste de noms de waifus selon la rareté
-const NOMS_WAIFUS = {
-    COMMUNE: [],
-    PEU_COMMUNE: [],
-    RARE: [],
-    EPIQUE: [],
-    LEGENDAIRE: [],
-    MYTHIQUE: [],
-    WAIFU: [],
-};
+const WAIFUS = require('../data/waifus');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -62,19 +52,29 @@ module.exports = {
         const waifusObtenues = [];
         for (let i = 0; i < quantite; i++) {
             const rarete = tirerRarete();
-            const stats = genererStats(rarete);
-            const noms = NOMS_WAIFUS[rarete];
-            const nom = noms[Math.floor(Math.random() * noms.length)];
+            
+            // Filtrer les waifus disponibles selon la rareté
+            const waifusDispo = WAIFUS.filter(w => w.rarete === rarete);
+            
+            // Si aucune waifu de cette rareté, prendre une commune
+            const pool = waifusDispo.length > 0 ? waifusDispo : WAIFUS.filter(w => w.rarete === 'COMMUNE');
+            const waifuData = pool[Math.floor(Math.random() * pool.length)];
+            
+            const stats = waifuData.stats || genererStats(rarete);
 
             const waifu = await Waifu.create({
-                nom,
+                nom: waifuData.nom,
+                description: waifuData.description,
+                apparence: waifuData.apparence,
                 rarete,
+                type: waifuData.type || 'Neutre',
                 stats,
+                competences: waifuData.competences || [],
                 proprietaire: userId,
             });
 
             player.waifus.push(waifu._id);
-            waifusObtenues.push({ nom, rarete, stats, waifu });
+            waifusObtenues.push({ ...waifuData, rarete });
         }
 
         // Déduire les clés
@@ -84,15 +84,16 @@ module.exports = {
 
         // Construire l'embed de réponse
         if (quantite === 1) {
-            const { nom, rarete, stats } = waifusObtenues[0];
+            const { nom, rarete, stats, description, univers } = waifusObtenues[0];
             const rareteInfo = RARETES[rarete];
 
             const embed = new EmbedBuilder()
                 .setTitle(`✨ Invocation !`)
-                .setDescription(`Une entité mystérieuse émerge de la machine...`)
+                .setDescription(`*${description.substring(0, 200)}...*`)
                 .addFields(
                     { name: '🌸 Waifu', value: `**${nom}**`, inline: true },
                     { name: `${rareteInfo.emoji} Rareté`, value: rareteInfo.nom, inline: true },
+                    { name: '🌍 Univers', value: univers || 'Inconnu', inline: true },
                     { name: '❤️ HP', value: `${stats.hp}`, inline: true },
                     { name: '🛡️ DEF', value: `${stats.def}`, inline: true },
                     { name: '⚡ SPD', value: `${stats.spd}`, inline: true },
@@ -107,9 +108,9 @@ module.exports = {
         } else {
             // Invocation x10
             let description = '';
-            for (const { nom, rarete } of waifusObtenues) {
+            for (const { nom, rarete, univers } of waifusObtenues) {
                 const rareteInfo = RARETES[rarete];
-                description += `${rareteInfo.emoji} **${nom}** — ${rareteInfo.nom}\n`;
+                description += `${rareteInfo.emoji} **${nom}** (${univers || 'Inconnu'}) — ${rareteInfo.nom}\n`;
             }
 
             const embed = new EmbedBuilder()
@@ -121,4 +122,4 @@ module.exports = {
             return interaction.editReply({ embeds: [embed] });
         }
     }
-};
+}
