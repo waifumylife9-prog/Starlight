@@ -9,8 +9,8 @@ const WaifuSchema = new mongoose.Schema({
     type: { type: String, default: 'Neutre' },
 
     // Propriétaire
-    proprietaire: { type: String, required: true }, // userId
-    
+    proprietaire: { type: String, required: true },
+
     // Stats de base
     stats: {
         hp: { type: Number, default: 100 },
@@ -24,17 +24,10 @@ const WaifuSchema = new mongoose.Schema({
     // Progression
     niveau: { type: Number, default: 1 },
     xp: { type: Number, default: 0 },
-    pointsStat: { type: Number, default: 0 }, // points à distribuer
+    pointsStat: { type: Number, default: 0 },
 
-    // Compétences
-    competences: [{ 
-        nom: String, 
-        description: String,
-        type: String, // actif, passif, ultime, lien
-        degats: Number,
-        cooldown: Number,
-        niveauRequis: Number,
-    }],
+    // Compétences — Mixed pour accepter tout format
+    competences: { type: mongoose.Schema.Types.Mixed, default: [] },
 
     // Lien
     lien: { type: Number, default: 0 },
@@ -46,8 +39,8 @@ const WaifuSchema = new mongoose.Schema({
         ref: 'Waifu'
     }],
     estEnfant: { type: Boolean, default: false },
-    stadesCroissance: { 
-        type: String, 
+    stadesCroissance: {
+        type: String,
         enum: ['bebe', 'enfant', 'adulte'],
         default: 'adulte'
     },
