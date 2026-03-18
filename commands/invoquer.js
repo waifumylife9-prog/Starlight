@@ -1,8 +1,8 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, WebhookClient } = require('discord.js');
 const Player = require('../models/Player');
 const Waifu = require('../models/Waifu');
 const Base = require('../models/Base');
-const { tirerRarete, genererStats } = require('../utils/gacha');
+const { tirerRarete } = require('../utils/gacha');
 const { RARETES } = require('../config');
 const WAIFUS = require('../data/waifus');
 
@@ -27,18 +27,15 @@ module.exports = {
             const username = interaction.user.username;
             const quantite = interaction.options.getInteger('quantite') || 1;
 
-            // Récupérer ou créer le joueur
             let player = await Player.findOne({ userId });
             if (!player) {
                 player = await Player.create({ userId, username });
             }
 
-            // Vérifier les clés
             if (player.cles < quantite) {
                 return interaction.editReply(`❌ Tu n'as pas assez de clés ! Tu en as **${player.cles}** et il t'en faut **${quantite}**.`);
             }
 
-            // Vérifier la capacité de la base
             let base = await Base.findOne({ proprietaire: userId });
             if (!base) {
                 base = await Base.create({ proprietaire: userId });
@@ -49,26 +46,22 @@ module.exports = {
                 return interaction.editReply(`❌ Ta base est pleine ! Capacité : **${waifusActuelles}/${base.capaciteWaifus}**. Construis des dortoirs !`);
             }
 
-            // Effectuer les invocations
             const waifusObtenues = [];
 
             for (let i = 0; i < quantite; i++) {
                 const rarete = tirerRarete();
 
-                // Filtrer les waifus de cette rareté
                 let pool = WAIFUS.filter(w => w.rarete === rarete);
-
-                // Si aucune waifu de cette rareté, fallback sur commune
-                if (pool.length === 0) {
-                    pool = WAIFUS.filter(w => w.rarete === 'COMMUNE');
-                }
-
-                // Dernier recours — prendre n'importe quelle waifu
-                if (pool.length === 0) {
-                    pool = WAIFUS;
-                }
+                if (pool.length === 0) pool = WAIFUS.filter(w => w.rarete === 'COMMUNE');
+                if (pool.length === 0) pool = WAIFUS;
 
                 const waifuData = pool[Math.floor(Math.random() * pool.length)];
+
+                // Fix : s'assurer que competences est un tableau d'objets
+                let competences = waifuData.competences || [];
+                if (typeof competences === 'string') {
+                    try { competences = JSON.parse(competences); } catch { competences = []; }
+                }
 
                 const waifu = await Waifu.create({
                     nom: waifuData.nom,
@@ -77,7 +70,7 @@ module.exports = {
                     rarete: waifuData.rarete,
                     type: waifuData.type || 'Neutre',
                     stats: waifuData.stats,
-                    competences: waifuData.competences || [],
+                    competences: competences,
                     proprietaire: userId,
                 });
 
@@ -85,12 +78,10 @@ module.exports = {
                 waifusObtenues.push({ ...waifuData });
             }
 
-            // Déduire les clés
             player.cles -= quantite;
             player.statistiques.waifusInvoquees += quantite;
             await player.save();
 
-            // Réponse
             if (quantite === 1) {
                 const w = waifusObtenues[0];
                 const rareteInfo = RARETES[w.rarete] || RARETES['COMMUNE'];
@@ -131,8 +122,8 @@ module.exports = {
             }
 
         } catch (error) {
-            console.error('Erreur invoquer:', error);
-            return interaction.editReply('❌ Une erreur est survenue lors de l\'invocation !');
+            console.error(error);
+            await interaction.editReply('❌ Une erreur est survenue !');
         }
     }
-};
+}

@@ -48,4 +48,4 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
-client.login(process.env.DISCORD_TOKEN);
+ReadyClient.login(DISCORD_TOKEN)
