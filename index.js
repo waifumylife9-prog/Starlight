@@ -28,7 +28,7 @@ for (const file of commandFiles) {
 }
 
 // Quand le bot est prêt
-client.once('ready', async () => {
+client.once('clientReady', async () => {
     console.log(`✅ ${client.user.tag} est en ligne !`);
     await connectDB();
 });
@@ -44,8 +44,25 @@ client.on('interactionCreate', async interaction => {
         await command.execute(interaction);
     } catch (error) {
         console.error(error);
-        await interaction.reply({ content: '❌ Une erreur est survenue !', ephemeral: true });
+        try {
+            if (interaction.deferred) {
+                await interaction.editReply({ content: '❌ Une erreur est survenue !' });
+            } else {
+                await interaction.reply({ content: '❌ Une erreur est survenue !', flags: 64 });
+            }
+        } catch (e) {
+            console.error('Impossible de répondre à l\'interaction:', e);
+        }
     }
 });
 
-client.login(process.env.DISCORD_TOKEN)
+// Empêcher les erreurs non gérées de crasher le bot
+process.on('unhandledRejection', error => {
+    console.error('Erreur non gérée:', error);
+});
+
+client.on('error', error => {
+    console.error('Erreur client Discord:', error);
+});
+
+client.login(process.env.DISCORD_TOKEN);
