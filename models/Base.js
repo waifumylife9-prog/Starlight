@@ -3,11 +3,9 @@ const mongoose = require('mongoose');
 const BaseSchema = new mongoose.Schema({
     proprietaire: { type: String, required: true, unique: true },
     
-    // Grille 2D
-    taille: { type: Number, default: 5 }, // 5x5 au départ
+    taille: { type: Number, default: 5 },
     grille: { type: Array, default: [] },
 
-    // Salles construites
     salles: [{
         type: { type: String, required: true },
         niveau: { type: Number, default: 1 },
@@ -19,7 +17,6 @@ const BaseSchema = new mongoose.Schema({
         finConstruction: { type: Date },
     }],
 
-    // Défenses
     defenses: [{
         type: { type: String, required: true },
         niveau: { type: Number, default: 1 },
@@ -29,7 +26,6 @@ const BaseSchema = new mongoose.Schema({
         },
     }],
 
-    // Déco
     decorations: [{
         type: { type: String, required: true },
         position: {
@@ -39,7 +35,6 @@ const BaseSchema = new mongoose.Schema({
         bonus: { type: Object, default: {} },
     }],
 
-    // Ressources
     ressources: {
         metal: { type: Number, default: 100 },
         energie: { type: Number, default: 100 },
@@ -47,17 +42,14 @@ const BaseSchema = new mongoose.Schema({
         materiaux: { type: Number, default: 100 },
     },
 
-    // Stats de la base
-    capaciteWaifus: { type: Number, default: 5 },
+    capaciteWaifus: { type: Number, default: 10 },
     niveauDefense: { type: Number, default: 0 },
     
-    // Coordonnées (pour les raids)
     coordonnees: {
         x: { type: Number, default: () => Math.floor(Math.random() * 1000) },
         y: { type: Number, default: () => Math.floor(Math.random() * 1000) },
     },
 
-    // Dispositifs d'espionnage
     espions: [{
         poseurId: String,
         datepose: Date,
