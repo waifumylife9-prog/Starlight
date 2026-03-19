@@ -1,6 +1,7 @@
-const { SlashCommandBuilder, EmbedBuilder, WebhookClient } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const Player = require('../models/Player');
 const Waifu = require('../models/Waifu');
+const WaifuImage = require('../models/WaifuImage');
 const Base = require('../models/Base');
 const { tirerRarete } = require('../utils/gacha');
 const { RARETES } = require('../config');
@@ -57,7 +58,6 @@ module.exports = {
 
                 const waifuData = pool[Math.floor(Math.random() * pool.length)];
 
-                // Fix : s'assurer que competences est un tableau d'objets
                 let competences = waifuData.competences || [];
                 if (typeof competences === 'string') {
                     try { competences = JSON.parse(competences); } catch { competences = []; }
@@ -86,6 +86,9 @@ module.exports = {
                 const w = waifusObtenues[0];
                 const rareteInfo = RARETES[w.rarete] || RARETES['COMMUNE'];
 
+                // Récupérer l'image si elle existe
+                const imageDoc = await WaifuImage.findOne({ nom: w.nom });
+
                 const embed = new EmbedBuilder()
                     .setTitle(`✨ Invocation !`)
                     .setDescription(`*${w.description ? w.description.substring(0, 300) + '...' : 'Une entité mystérieuse émerge de la machine...'}*`)
@@ -102,6 +105,8 @@ module.exports = {
                     )
                     .setColor(rareteInfo.couleur)
                     .setFooter({ text: `🗝️ Clés restantes : ${player.cles}` });
+
+                if (imageDoc) embed.setImage(imageDoc.url);
 
                 return interaction.editReply({ embeds: [embed] });
 
@@ -126,4 +131,4 @@ module.exports = {
             await interaction.editReply('❌ Une erreur est survenue !');
         }
     }
-}
+};
