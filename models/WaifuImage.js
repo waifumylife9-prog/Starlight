@@ -5,4 +5,4 @@ const WaifuImageSchema = new mongoose.Schema({
     url: { type: String, required: true },
 });
 
-module.exports = mongoose.model('WaifuImage', WaifuImageSchema);
+module.exports = mongoose.models.WaifuImage || mongoose.model('WaifuImage', WaifuImageSchema);
