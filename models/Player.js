@@ -13,6 +13,13 @@ const PlayerSchema = new mongoose.Schema({
         completee: { type: Boolean, default: false },
         progression: { type: Number, default: 0 },
     }],
+    statistiques: {
+        waifusInvoquees: { type: Number, default: 0 },
+        combatsGagnes: { type: Number, default: 0 },
+        combatsPerdus: { type: Number, default: 0 },
+        raidsLances: { type: Number, default: 0 },
+        raidsDefendus: { type: Number, default: 0 },
+    },
     createdAt: { type: Date, default: Date.now },
 });
 
