@@ -15,7 +15,6 @@ const client = new Client({
 
 client.commands = new Collection();
 
-// Charger les commandes
 const commandsPath = path.join(__dirname, 'commands');
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 
@@ -27,13 +26,10 @@ for (const file of commandFiles) {
     }
 }
 
-// Quand le bot est prêt
-client.once('clientReady', async () => {
+client.once('clientReady', () => {
     console.log(`✅ ${client.user.tag} est en ligne !`);
-    await connectDB();
 });
 
-// Gérer les interactions (slash commands)
 client.on('interactionCreate', async interaction => {
     if (!interaction.isChatInputCommand()) return;
 
@@ -56,7 +52,6 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
-// Empêcher les erreurs non gérées de crasher le bot
 process.on('unhandledRejection', error => {
     console.error('Erreur non gérée:', error);
 });
@@ -65,4 +60,10 @@ client.on('error', error => {
     console.error('Erreur client Discord:', error);
 });
 
-client.login(process.env.DISCORD_TOKEN);
+// Connecter MongoDB d'abord, puis lancer le bot
+connectDB().then(() => {
+    client.login(process.env.DISCORD_TOKEN);
+}).catch(err => {
+    console.error('Impossible de connecter MongoDB:', err);
+    process.exit(1);
+});
