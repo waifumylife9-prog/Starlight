@@ -23,4 +23,4 @@ const PlayerSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now },
 });
 
-module.exports = mongoose.model('Player', PlayerSchema);
+module.exports = mongoose.models.Player || mongoose.model('Player', PlayerSchema);

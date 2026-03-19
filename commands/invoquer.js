@@ -79,7 +79,7 @@ module.exports = {
             }
 
             player.cles -= quantite;
-            player.statistiques.waifusInvoquees += quantite;
+            if (player.statistiques) player.statistiques.waifusInvoquees += quantite;
             await player.save();
 
             if (quantite === 1) {
