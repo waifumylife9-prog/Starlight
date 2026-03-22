@@ -37,7 +37,6 @@ module.exports = {
         }
 
         const cible = interaction.options.getUser('cible');
-        const channel = interaction.channel;
 
         // Si déjà en cours → annuler
         if (spamsActifs.has(cible.id)) {
@@ -45,7 +44,15 @@ module.exports = {
             return interaction.reply({ content: `✅ Spam annulé sur **${cible.username}** — elle a survécu... pour l'instant 😈`, ephemeral: true });
         }
 
-        await interaction.reply({ content: `🎯 Spam lancé sur **${cible.username}** 😭`, ephemeral: true });
+        // Ouvrir les DMs
+        let dmChannel;
+        try {
+            dmChannel = await cible.createDM();
+        } catch (e) {
+            return interaction.reply({ content: `❌ **${cible.username}** a les DMs fermés !`, ephemeral: true });
+        }
+
+        await interaction.reply({ content: `🎯 Spam lancé dans les DMs de **${cible.username}** 😭`, ephemeral: true });
 
         spamsActifs.set(cible.id, true);
 
@@ -54,7 +61,7 @@ module.exports = {
             while (spamsActifs.get(cible.id) === true) {
                 try {
                     const msg = MESSAGES[Math.floor(Math.random() * MESSAGES.length)];
-                    await channel.send(`${cible} ${msg}`);
+                    await dmChannel.send(msg);
                 } catch (e) {
                     spamsActifs.delete(cible.id);
                     break;
