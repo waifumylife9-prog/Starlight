@@ -6,8 +6,9 @@ const WaifuSchema = new mongoose.Schema({
     apparence: { type: String, default: '' },
     rarete: { type: String, required: true },
     type: { type: String, default: 'Neutre' },
-    proprietaire: { type: String, required: true },
+    univers: { type: String, default: '' },
     image: { type: String, default: null },
+    proprietaire: { type: String, required: true },
     stats: {
         hp: { type: Number, default: 100 },
         def: { type: Number, default: 10 },

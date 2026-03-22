@@ -1,7 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const Player = require('../models/Player');
 const Waifu = require('../models/Waifu');
-const WaifuImage = require('../models/WaifuImage');
 const Base = require('../models/Base');
 const { tirerRarete } = require('../utils/gacha');
 const { RARETES } = require('../config');
@@ -72,6 +71,8 @@ module.exports = {
                     stats: waifuData.stats,
                     competences: competences,
                     proprietaire: userId,
+                    univers: waifuData.univers || '',
+                    image: waifuData.image || '',
                 });
 
                 player.waifus.push(waifu._id);
@@ -85,9 +86,6 @@ module.exports = {
             if (quantite === 1) {
                 const w = waifusObtenues[0];
                 const rareteInfo = RARETES[w.rarete] || RARETES['COMMUNE'];
-
-                // Récupérer l'image si elle existe
-                const imageDoc = await WaifuImage.findOne({ nom: w.nom });
 
                 const embed = new EmbedBuilder()
                     .setTitle(`✨ Invocation !`)
@@ -106,7 +104,7 @@ module.exports = {
                     .setColor(rareteInfo.couleur)
                     .setFooter({ text: `🗝️ Clés restantes : ${player.cles}` });
 
-                if (imageDoc) embed.setImage(imageDoc.url);
+                if (w.image) embed.setImage(w.image);
 
                 return interaction.editReply({ embeds: [embed] });
 
