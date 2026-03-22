@@ -19,8 +19,25 @@ const PlayerSchema = new mongoose.Schema({
         combatsPerdus: { type: Number, default: 0 },
         raidsLances: { type: Number, default: 0 },
         raidsDefendus: { type: Number, default: 0 },
+        raidsEffectues: { type: Number, default: 0 },
     },
-    createdAt: { type: Date, default: Date.now },
+    oc: {
+        nom: { type: String, default: '' },
+        genre: { type: String, default: 'femme_soumise' },
+        bio: { type: String, default: '' },
+        apparence: {
+            cheveux: { type: String, default: '' },
+            yeux: { type: String, default: '' },
+            taille: { type: String, default: '' },
+            morphologie: { type: String, default: '' },
+            tenue: { type: String, default: '' },
+        },
+        faction: { type: String, default: '' },
+        titre: { type: String, default: '' },
+        waifuFavoriteId: { type: mongoose.Schema.Types.ObjectId, ref: 'Waifu' },
+    },
+    dateCreation: { type: Date, default: Date.now },
+    derniereConnexion: { type: Date, default: Date.now },
 });
 
 module.exports = mongoose.models.Player || mongoose.model('Player', PlayerSchema);
