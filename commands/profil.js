@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, AttachmentBuilder } = require('discord.js');
-const { createCanvas, loadImage, registerFont } = require('canvas');
+const { createCanvas, loadImage } = require('@napi-rs/canvas');
 const Player = require('../models/Player');
 const Waifu = require('../models/Waifu');
 
