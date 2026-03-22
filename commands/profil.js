@@ -68,21 +68,18 @@ module.exports = {
                 embed.setDescription(`✦ *${oc.titre}* ✦`);
             }
 
-            // Faction
+            // Faction + Genre sur la même ligne
             if (oc.faction) {
-                embed.addFields({
-                    name: '⚔️ Faction',
-                    value: oc.faction,
-                    inline: true
-                });
+                embed.addFields(
+                    { name: '⚔️ Faction', value: oc.faction, inline: true },
+                    { name: '🎭 Identité', value: `${genre.emoji} ${genre.label}`, inline: true },
+                    { name: '\u200b', value: '\u200b', inline: true },
+                );
+            } else {
+                embed.addFields(
+                    { name: '🎭 Identité', value: `${genre.emoji} ${genre.label}`, inline: true },
+                );
             }
-
-            // Genre
-            embed.addFields({
-                name: '🎭 Identité',
-                value: `${genre.emoji} ${genre.label}`,
-                inline: true
-            });
 
             // Bio
             if (oc.bio) {
@@ -93,10 +90,9 @@ module.exports = {
                 });
             }
 
-            // Image apparence OC
-            const app = oc.apparence || {};
-            if (app.imageUrl) {
-                embed.setImage(app.imageUrl);
+            // Image OC
+            if (oc.imageUrl) {
+                embed.setImage(oc.imageUrl);
             }
 
             // Séparateur stats

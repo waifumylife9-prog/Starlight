@@ -25,9 +25,7 @@ const PlayerSchema = new mongoose.Schema({
         nom: { type: String, default: '' },
         genre: { type: String, default: 'femme_soumise' },
         bio: { type: String, default: '' },
-        apparence: {
-            imageUrl: { type: String, default: '' },
-        },
+        imageUrl: { type: String, default: '' },
         faction: { type: String, default: '' },
         titre: { type: String, default: '' },
         waifuFavoriteId: { type: mongoose.Schema.Types.ObjectId, ref: 'Waifu' },

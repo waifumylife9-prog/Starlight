@@ -33,8 +33,8 @@ module.exports = {
                         .setDescription('La bio de ton OC (max 300 caractères)')
                         .setRequired(true)))
         .addSubcommand(sub =>
-            sub.setName('apparence')
-                .setDescription('Définir l\'image d\'apparence de ton OC')
+            sub.setName('image')
+                .setDescription('Définir l\'image de ton OC')
                 .addStringOption(opt =>
                     opt.setName('url')
                         .setDescription('URL de l\'image de ton OC')
@@ -98,13 +98,12 @@ module.exports = {
                     return interaction.editReply(`✅ Bio mise à jour !`);
                 }
 
-                case 'apparence': {
+                case 'image': {
                     const url = interaction.options.getString('url');
-                    if (!url.startsWith('http')) return interaction.editReply('❌ URL invalide ! Donne un lien qui commence par http');
-                    if (!player.oc.apparence) player.oc.apparence = {};
-                    player.oc.apparence.imageUrl = url;
+                    if (!url.startsWith('http')) return interaction.editReply('❌ URL invalide ! Le lien doit commencer par http');
+                    player.oc.imageUrl = url;
                     await player.save();
-                    return interaction.editReply('✅ Image d\'apparence mise à jour !');
+                    return interaction.editReply('✅ Image de ton OC mise à jour !');
                 }
 
                 case 'faction': {
@@ -134,7 +133,7 @@ module.exports = {
 
         } catch (error) {
             console.error('Erreur editprofil:', error);
-            return interaction.editReply('❌ Une erreur est survenue !');
+            return interaction.editReply('❌ Une erreur est survenue : ' + error.message);
         }
     }
 };
