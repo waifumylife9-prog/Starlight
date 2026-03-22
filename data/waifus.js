@@ -507,7 +507,7 @@ const WAIFUS = [
     // REDO OF HEALER
     // ═══════════════════════════════
     {
-        nom: "Flare",
+        nom: "Flare (dominante)",
         univers: "Redo of Healer",
         rarete: "EPIQUE",
         type: "Feu",
