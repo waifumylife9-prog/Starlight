@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, AttachmentBuilder } = require('discord.js');
-const { createCanvas, loadImage } = require('@napi-rs/canvas');
+const { createCanvas, loadImage, GlobalFonts } = require('@napi-rs/canvas');
+GlobalFonts.loadSystemFonts();
 const Player = require('../models/Player');
 const Waifu = require('../models/Waifu');
 
