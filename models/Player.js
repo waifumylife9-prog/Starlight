@@ -26,11 +26,7 @@ const PlayerSchema = new mongoose.Schema({
         genre: { type: String, default: 'femme_soumise' },
         bio: { type: String, default: '' },
         apparence: {
-            cheveux: { type: String, default: '' },
-            yeux: { type: String, default: '' },
-            taille: { type: String, default: '' },
-            morphologie: { type: String, default: '' },
-            tenue: { type: String, default: '' },
+            imageUrl: { type: String, default: '' },
         },
         faction: { type: String, default: '' },
         titre: { type: String, default: '' },
