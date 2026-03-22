@@ -54,15 +54,6 @@ module.exports = {
                 ? new Date(player.dateCreation || player.createdAt).toLocaleDateString('fr-FR')
                 : 'Inconnue';
 
-            // Apparence
-            const app = oc.apparence || {};
-            let appText = '';
-            if (app.cheveux) appText += `💇 **Cheveux :** ${app.cheveux}\n`;
-            if (app.yeux) appText += `👁️ **Yeux :** ${app.yeux}\n`;
-            if (app.taille) appText += `📏 **Taille :** ${app.taille}\n`;
-            if (app.morphologie) appText += `🧍 **Morphologie :** ${app.morphologie}\n`;
-            if (app.tenue) appText += `👗 **Tenue :** ${app.tenue}\n`;
-
             // Construction embed
             const embed = new EmbedBuilder()
                 .setColor(genre.couleur)
@@ -70,7 +61,6 @@ module.exports = {
                     name: `${genre.emoji} ${oc.nom || target.username}`,
                     iconURL: target.displayAvatarURL({ extension: 'png', size: 256 })
                 })
-                .setThumbnail(target.displayAvatarURL({ extension: 'png', size: 256 }))
                 .setFooter({ text: `✨ Starlight • Arrivée le ${dateArrivee}` });
 
             // Titre
@@ -80,9 +70,11 @@ module.exports = {
 
             // Faction
             if (oc.faction) {
-                embed.addFields({ name: '⚔️ Faction', value: oc.faction, inline: true });
-                embed.addFields({ name: '\u200b', value: '\u200b', inline: true });
-                embed.addFields({ name: '\u200b', value: '\u200b', inline: true });
+                embed.addFields({
+                    name: '⚔️ Faction',
+                    value: oc.faction,
+                    inline: true
+                });
             }
 
             // Genre
@@ -101,19 +93,20 @@ module.exports = {
                 });
             }
 
-            // Apparence
-            if (appText) {
-                embed.addFields({
-                    name: '✨ Apparence',
-                    value: appText,
-                    inline: false
-                });
+            // Image apparence OC
+            const app = oc.apparence || {};
+            if (app.imageUrl) {
+                embed.setImage(app.imageUrl);
             }
 
             // Séparateur stats
-            embed.addFields({ name: '━━━━━━━━━━━━━━━━━━━━━━', value: '📊 **Statistiques**', inline: false });
+            embed.addFields({
+                name: '━━━━━━━━━━━━━━━━━━━━━━',
+                value: '📊 **Statistiques**',
+                inline: false
+            });
 
-            // Stats en colonnes
+            // Stats
             embed.addFields(
                 { name: '✨ Invocations', value: waifusTotal.toString(), inline: true },
                 { name: '⚔️ Combats', value: combatsGagnes.toString(), inline: true },

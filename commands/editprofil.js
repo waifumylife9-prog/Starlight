@@ -34,27 +34,11 @@ module.exports = {
                         .setRequired(true)))
         .addSubcommand(sub =>
             sub.setName('apparence')
-                .setDescription('Décrire l\'apparence de ton OC')
+                .setDescription('Définir l\'image d\'apparence de ton OC')
                 .addStringOption(opt =>
-                    opt.setName('cheveux')
-                        .setDescription('Couleur et style des cheveux')
-                        .setRequired(false))
-                .addStringOption(opt =>
-                    opt.setName('yeux')
-                        .setDescription('Couleur des yeux')
-                        .setRequired(false))
-                .addStringOption(opt =>
-                    opt.setName('taille')
-                        .setDescription('Taille (ex: 1m65)')
-                        .setRequired(false))
-                .addStringOption(opt =>
-                    opt.setName('morphologie')
-                        .setDescription('Morphologie')
-                        .setRequired(false))
-                .addStringOption(opt =>
-                    opt.setName('tenue')
-                        .setDescription('Style vestimentaire')
-                        .setRequired(false)))
+                    opt.setName('url')
+                        .setDescription('URL de l\'image de ton OC')
+                        .setRequired(true)))
         .addSubcommand(sub =>
             sub.setName('faction')
                 .setDescription('Créer ou rejoindre une faction (coûte 10 clés)')
@@ -115,30 +99,19 @@ module.exports = {
                 }
 
                 case 'apparence': {
-                    const cheveux = interaction.options.getString('cheveux');
-                    const yeux = interaction.options.getString('yeux');
-                    const taille = interaction.options.getString('taille');
-                    const morphologie = interaction.options.getString('morphologie');
-                    const tenue = interaction.options.getString('tenue');
-
+                    const url = interaction.options.getString('url');
+                    if (!url.startsWith('http')) return interaction.editReply('❌ URL invalide ! Donne un lien qui commence par http');
                     if (!player.oc.apparence) player.oc.apparence = {};
-                    if (cheveux) player.oc.apparence.cheveux = cheveux;
-                    if (yeux) player.oc.apparence.yeux = yeux;
-                    if (taille) player.oc.apparence.taille = taille;
-                    if (morphologie) player.oc.apparence.morphologie = morphologie;
-                    if (tenue) player.oc.apparence.tenue = tenue;
-
+                    player.oc.apparence.imageUrl = url;
                     await player.save();
-                    return interaction.editReply('✅ Apparence mise à jour !');
+                    return interaction.editReply('✅ Image d\'apparence mise à jour !');
                 }
 
                 case 'faction': {
                     const nomFaction = interaction.options.getString('nom');
-
                     if (player.cles < 10) {
                         return interaction.editReply(`❌ Créer une faction coûte **10 clés** ! Tu en as **${player.cles}**.`);
                     }
-
                     player.cles -= 10;
                     player.oc.faction = nomFaction;
                     await player.save();
@@ -152,9 +125,7 @@ module.exports = {
                         nom: { $regex: nomWaifu, $options: 'i' },
                         estVivante: true
                     });
-
                     if (!waifu) return interaction.editReply(`❌ Tu n'as pas de waifu nommée **${nomWaifu}** !`);
-
                     player.oc.waifuFavoriteId = waifu._id;
                     await player.save();
                     return interaction.editReply(`✅ Waifu favorite mise à jour : **${waifu.nom}** 💞`);
