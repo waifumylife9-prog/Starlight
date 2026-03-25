@@ -1,14 +1,9 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const Waifu = require('../models/Waifu');
+const WaifuImage = require('../models/WaifuImage');
 const { RARETES } = require('../config');
-const WAIFUS_DATA = require('../data/waifus');
 
 const ORDRE_RARETE = ['WAIFU', 'MYTHIQUE', 'LEGENDAIRE', 'EPIQUE', 'RARE', 'PEU_COMMUNE', 'COMMUNE'];
-
-function getWaifuImage(nom) {
-    const data = WAIFUS_DATA.find(w => w.nom === nom);
-    return data?.image || null;
-}
 
 function trierWaifus(waifus) {
     return waifus.sort((a, b) => {
@@ -16,36 +11,6 @@ function trierWaifus(waifus) {
         const indexB = ORDRE_RARETE.indexOf(b.rarete);
         return indexA - indexB;
     });
-}
-
-function buildEmbed(waifus, page, totalPages, target, filtreRarete, filtreUnivers) {
-    const rarete = RARETES[waifus[0]?.rarete] || RARETES['COMMUNE'];
-    
-    const embed = new EmbedBuilder()
-        .setColor(rarete?.couleur || 0x9B59B6)
-        .setTitle(`✨ Collection de ${target.username}`)
-        .setFooter({ text: `Page ${page + 1}/${totalPages} • ${waifus.length} waifus affichées` });
-
-    if (filtreRarete) embed.setDescription(`Filtre rareté : **${RARETES[filtreRarete]?.nom || filtreRarete}**`);
-    if (filtreUnivers) embed.setDescription((embed.data.description || '') + ` • Filtre univers : **${filtreUnivers}**`);
-
-    const start = page * 10;
-    const slice = waifus.slice(start, start + 10);
-
-    let description = '';
-    slice.forEach((w, i) => {
-        const r = RARETES[w.rarete] || RARETES['COMMUNE'];
-        const img = getWaifuImage(w.nom);
-        description += `${r.emoji} **${w.nom}** — Niv.**${w.niveau || 1}** • *${w.univers || 'Inconnu'}*\n`;
-    });
-
-    embed.setDescription((embed.data.description ? embed.data.description + '\n\n' : '') + description);
-
-    // Thumbnail = image de la première waifu de la page
-    const firstWaifu = WAIFUS_DATA.find(w => w.nom === slice[0]?.nom);
-    if (firstWaifu?.image) embed.setThumbnail(firstWaifu.image);
-
-    return embed;
 }
 
 function buildButtons(page, totalPages) {
@@ -109,10 +74,47 @@ module.exports = {
 
             waifus = trierWaifus(waifus);
 
-            let page = 0;
             const totalPages = Math.ceil(waifus.length / 10);
+            let page = 0;
 
-            const embed = buildEmbed(waifus, page, totalPages, target, filtreRarete, filtreUnivers);
+            const buildEmbed = async (p) => {
+                const slice = waifus.slice(p * 10, p * 10 + 10);
+
+                // Récupérer les images de toutes les waifus de la page
+                const noms = slice.map(w => w.nom);
+                const images = await WaifuImage.find({ nom: { $in: noms } });
+                const imageMap = {};
+                images.forEach(img => imageMap[img.nom] = img.url);
+
+                const premierRarete = RARETES[slice[0]?.rarete] || RARETES['COMMUNE'];
+
+                const embed = new EmbedBuilder()
+                    .setColor(premierRarete.couleur)
+                    .setTitle(`✨ Collection de ${target.username}`)
+                    .setFooter({ text: `Page ${p + 1}/${totalPages} • ${waifus.length} waifu(s) au total` });
+
+                let desc = '';
+                if (filtreRarete) desc += `Filtre : **${RARETES[filtreRarete]?.nom}**\n`;
+                if (filtreUnivers) desc += `Univers : **${filtreUnivers}**\n`;
+                if (desc) desc += '\n';
+
+                slice.forEach(w => {
+                    const r = RARETES[w.rarete] || RARETES['COMMUNE'];
+                    const img = imageMap[w.nom] ? '🖼️' : '';
+                    desc += `${r.emoji} **${w.nom}** ${img} — Niv.**${w.niveau || 1}** • *${w.univers || 'Inconnu'}*\n`;
+                });
+
+                embed.setDescription(desc);
+
+                // Thumbnail = image de la première waifu de la page
+                if (imageMap[slice[0]?.nom]) {
+                    embed.setThumbnail(imageMap[slice[0].nom]);
+                }
+
+                return embed;
+            };
+
+            const embed = await buildEmbed(page);
             const buttons = buildButtons(page, totalPages);
 
             const msg = await interaction.editReply({
@@ -122,7 +124,6 @@ module.exports = {
 
             if (totalPages <= 1) return;
 
-            // Collecteur de boutons
             const collector = msg.createMessageComponentCollector({ time: 120000 });
 
             collector.on('collect', async i => {
@@ -133,16 +134,14 @@ module.exports = {
                 if (i.customId === 'prev') page--;
                 if (i.customId === 'next') page++;
 
-                const newEmbed = buildEmbed(waifus, page, totalPages, target, filtreRarete, filtreUnivers);
+                const newEmbed = await buildEmbed(page);
                 const newButtons = buildButtons(page, totalPages);
 
                 await i.update({ embeds: [newEmbed], components: [newButtons] });
             });
 
             collector.on('end', async () => {
-                try {
-                    await msg.edit({ components: [] });
-                } catch (e) {}
+                try { await msg.edit({ components: [] }); } catch (e) {}
             });
 
         } catch (error) {
