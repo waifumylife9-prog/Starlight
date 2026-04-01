@@ -1,6 +1,7 @@
 const Waifu = require('../models/Waifu');
 const Player = require('../models/Player');
-const { genererStatsEnfant, tirerRareteEnfant } = require('./gacha');
+const { genererStatsEnfant } = require('./gacha');
+const { tirerRarete } = require('./gacha');
 
 const genererNomEnfant = (nom1, nom2) => {
     const prenom1 = nom1.split(' ')[0].toLowerCase();
@@ -21,6 +22,7 @@ const genererNomEnfant = (nom1, nom2) => {
         fin1 + fin2,
     ].filter(n => n.length >= 2 && n.length <= 8);
 
+    if (combinaisons.length === 0) return 'Nova';
     const nom = combinaisons[Math.floor(Math.random() * combinaisons.length)];
     return nom.charAt(0).toUpperCase() + nom.slice(1);
 };
@@ -28,26 +30,52 @@ const genererNomEnfant = (nom1, nom2) => {
 const verifierGrossesses = async (client) => {
     try {
         const maintenant = new Date();
+
+        // Trouver toutes les grossesses terminées
         const grossessesTerminees = await Waifu.find({
             enGrossesse: true,
             finGrossesse: { $lte: maintenant },
             estVivante: true,
         });
 
+        const traitees = new Set();
+
         for (const maman of grossessesTerminees) {
-            if (!maman.partenaireGrossesse) continue;
+            if (!maman.partenaireGrossesse) {
+                // Grossesse orpheline — libérer la maman
+                maman.enGrossesse = false;
+                maman.partenaireGrossesse = null;
+                maman.finGrossesse = null;
+                maman.estDisponible = true;
+                await maman.save();
+                continue;
+            }
+
+            // Éviter de traiter deux fois le même couple
+            const cle = [maman._id.toString(), maman.partenaireGrossesse.toString()].sort().join('-');
+            if (traitees.has(cle)) continue;
+            traitees.add(cle);
 
             const partenaire = await Waifu.findById(maman.partenaireGrossesse);
-            if (!partenaire) continue;
+
+            if (!partenaire) {
+                // Partenaire introuvable — libérer la maman
+                maman.enGrossesse = false;
+                maman.partenaireGrossesse = null;
+                maman.finGrossesse = null;
+                maman.estDisponible = true;
+                await maman.save();
+                continue;
+            }
 
             // Générer l'enfant
-            const rareteEnfant = tirerRareteEnfant(maman.rarete, partenaire.rarete);
+            const rareteEnfant = tirerRarete();
             const statsEnfant = genererStatsEnfant(maman, partenaire);
             const nomEnfant = genererNomEnfant(maman.nom, partenaire.nom);
 
             // Compétences héritées
-            const competencesMaman = maman.competences || [];
-            const competencesPartenaire = partenaire.competences || [];
+            const competencesMaman = Array.isArray(maman.competences) ? maman.competences : [];
+            const competencesPartenaire = Array.isArray(partenaire.competences) ? partenaire.competences : [];
             const toutesCompetences = [...competencesMaman, ...competencesPartenaire];
             const competencesHeritees = toutesCompetences
                 .sort(() => Math.random() - 0.5)
@@ -74,7 +102,7 @@ const verifierGrossesses = async (client) => {
                 { $push: { waifus: enfant._id } }
             );
 
-            // Libérer les mamans
+            // Libérer les deux mamans
             maman.enGrossesse = false;
             maman.partenaireGrossesse = null;
             maman.finGrossesse = null;
@@ -87,11 +115,15 @@ const verifierGrossesses = async (client) => {
             partenaire.estDisponible = true;
             await partenaire.save();
 
+            console.log(`✅ Enfant créé : ${nomEnfant} (${rareteEnfant}) pour ${maman.proprietaire}`);
+
             // Notifier le joueur en DM
             try {
                 const user = await client.users.fetch(maman.proprietaire);
                 if (user) {
-                    await user.send(`🍼 **Bonne nouvelle !** **${maman.nom}** et **${partenaire.nom}** ont eu un enfant !\n\n👶 **${nomEnfant}** est né(e) ! Rareté : **${rareteEnfant}**\n\nL'enfant grandit progressivement — surveille son évolution avec \`/collection\` !`);
+                    const { RARETES } = require('../config');
+                    const rareteInfo = RARETES[rareteEnfant] || RARETES['COMMUNE'];
+                    await user.send(`🍼 **Bonne nouvelle !** **${maman.nom}** et **${partenaire.nom}** ont eu un enfant !\n\n👶 **${nomEnfant}** est né(e) ! ${rareteInfo.emoji} ${rareteInfo.nom}\n\nUtilise \`/enfants\` pour voir sa croissance !`);
                 }
             } catch (e) {
                 // DMs fermés, pas grave
