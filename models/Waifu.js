@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const WaifuSchema = new mongoose.Schema({
     nom: { type: String, required: true },
+    numero: { type: Number, default: 1 },
     description: { type: String, default: '' },
     apparence: { type: String, default: '' },
     rarete: { type: String, required: true },

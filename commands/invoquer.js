@@ -29,18 +29,14 @@ module.exports = {
             const quantite = interaction.options.getInteger('quantite') || 1;
 
             let player = await Player.findOne({ userId });
-            if (!player) {
-                player = await Player.create({ userId, username });
-            }
+            if (!player) player = await Player.create({ userId, username });
 
             if (player.cles < quantite) {
                 return interaction.editReply(`❌ Tu n'as pas assez de clés ! Tu en as **${player.cles}** et il t'en faut **${quantite}**.`);
             }
 
             let base = await Base.findOne({ proprietaire: userId });
-            if (!base) {
-                base = await Base.create({ proprietaire: userId });
-            }
+            if (!base) base = await Base.create({ proprietaire: userId });
 
             const waifusActuelles = await Waifu.countDocuments({ proprietaire: userId, estVivante: true });
             if (waifusActuelles + quantite > base.capaciteWaifus) {
@@ -63,20 +59,28 @@ module.exports = {
                     try { competences = JSON.parse(competences); } catch { competences = []; }
                 }
 
+                // Numéro unique pour cette waifu
+                const memeNom = await Waifu.countDocuments({
+                    proprietaire: userId,
+                    nom: waifuData.nom,
+                });
+                const numero = memeNom + 1;
+
                 const waifu = await Waifu.create({
                     nom: waifuData.nom,
+                    numero,
                     description: waifuData.description || '',
                     apparence: waifuData.apparence || '',
                     rarete: waifuData.rarete,
                     type: waifuData.type || 'Neutre',
                     univers: waifuData.univers || '',
                     stats: waifuData.stats,
-                    competences: competences,
+                    competences,
                     proprietaire: userId,
                 });
 
                 player.waifus.push(waifu._id);
-                waifusObtenues.push({ ...waifuData });
+                waifusObtenues.push({ ...waifuData, numero });
             }
 
             player.cles -= quantite;
@@ -86,15 +90,14 @@ module.exports = {
             if (quantite === 1) {
                 const w = waifusObtenues[0];
                 const rareteInfo = RARETES[w.rarete] || RARETES['COMMUNE'];
-
-                // Récupérer l'image depuis WaifuImage
                 const imageDoc = await WaifuImage.findOne({ nom: w.nom });
+                const numLabel = w.numero > 1 ? ` #${w.numero}` : '';
 
                 const embed = new EmbedBuilder()
                     .setTitle(`✨ Invocation !`)
                     .setDescription(`*${w.description ? w.description.substring(0, 300) + '...' : 'Une entité mystérieuse émerge de la machine...'}*`)
                     .addFields(
-                        { name: '🌸 Waifu', value: `**${w.nom}**`, inline: true },
+                        { name: '🌸 Waifu', value: `**${w.nom}${numLabel}**`, inline: true },
                         { name: `${rareteInfo.emoji} Rareté`, value: rareteInfo.nom, inline: true },
                         { name: '🌍 Univers', value: w.univers || 'Inconnu', inline: true },
                         { name: '❤️ HP', value: `${w.stats.hp}`, inline: true },
@@ -115,7 +118,8 @@ module.exports = {
                 let description = '';
                 for (const w of waifusObtenues) {
                     const rareteInfo = RARETES[w.rarete] || RARETES['COMMUNE'];
-                    description += `${rareteInfo.emoji} **${w.nom}** (${w.univers || 'Inconnu'}) — ${rareteInfo.nom}\n`;
+                    const numLabel = w.numero > 1 ? ` #${w.numero}` : '';
+                    description += `${rareteInfo.emoji} **${w.nom}${numLabel}** (${w.univers || 'Inconnu'}) — ${rareteInfo.nom}\n`;
                 }
 
                 const embed = new EmbedBuilder()
