@@ -2,14 +2,14 @@ const mongoose = require('mongoose');
 
 const WaifuSchema = new mongoose.Schema({
     nom: { type: String, required: true },
-    numero: { type: Number, default: 1 },
+    index: { type: Number, default: 1 },
     description: { type: String, default: '' },
     apparence: { type: String, default: '' },
     rarete: { type: String, required: true },
     type: { type: String, default: 'Neutre' },
-    univers: { type: String, default: '' },
-    image: { type: String, default: null },
+    univers: { type: String, default: 'Inconnu' },
     proprietaire: { type: String, required: true },
+    image: { type: String, default: null },
     stats: {
         hp: { type: Number, default: 100 },
         def: { type: Number, default: 10 },
@@ -37,4 +37,4 @@ const WaifuSchema = new mongoose.Schema({
     dateInvocation: { type: Date, default: Date.now },
 });
 
-module.exports = mongoose.models.Waifu || mongoose.model('Waifu', WaifuSchema);
+module.exports = mongoose.model('Waifu', WaifuSchema);

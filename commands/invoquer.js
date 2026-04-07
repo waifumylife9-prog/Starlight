@@ -22,7 +22,6 @@ module.exports = {
 
     async execute(interaction) {
         await interaction.deferReply();
-
         try {
             const userId = interaction.user.id;
             const username = interaction.user.username;
@@ -47,7 +46,6 @@ module.exports = {
 
             for (let i = 0; i < quantite; i++) {
                 const rarete = tirerRarete();
-
                 let pool = WAIFUS.filter(w => w.rarete === rarete);
                 if (pool.length === 0) pool = WAIFUS.filter(w => w.rarete === 'COMMUNE');
                 if (pool.length === 0) pool = WAIFUS;
@@ -59,28 +57,30 @@ module.exports = {
                     try { competences = JSON.parse(competences); } catch { competences = []; }
                 }
 
-                // Numéro unique pour cette waifu
-                const memeNom = await Waifu.countDocuments({
-                    proprietaire: userId,
-                    nom: waifuData.nom,
-                });
-                const numero = memeNom + 1;
+                // Calcul de l'index unique par joueur + nom
+                const derniere = await Waifu.findOne(
+                    { proprietaire: userId, nom: waifuData.nom },
+                    {},
+                    { sort: { index: -1 } }
+                );
+                const nouvelIndex = derniere ? derniere.index + 1 : 1;
 
                 const waifu = await Waifu.create({
                     nom: waifuData.nom,
-                    numero,
+                    index: nouvelIndex,
                     description: waifuData.description || '',
                     apparence: waifuData.apparence || '',
                     rarete: waifuData.rarete,
                     type: waifuData.type || 'Neutre',
-                    univers: waifuData.univers || '',
                     stats: waifuData.stats,
-                    competences,
+                    competences: competences,
                     proprietaire: userId,
+                    univers: waifuData.univers || '',
+                    image: waifuData.image || '',
                 });
 
                 player.waifus.push(waifu._id);
-                waifusObtenues.push({ ...waifuData, numero });
+                waifusObtenues.push({ ...waifuData, index: nouvelIndex });
             }
 
             player.cles -= quantite;
@@ -91,13 +91,12 @@ module.exports = {
                 const w = waifusObtenues[0];
                 const rareteInfo = RARETES[w.rarete] || RARETES['COMMUNE'];
                 const imageDoc = await WaifuImage.findOne({ nom: w.nom });
-                const numLabel = w.numero > 1 ? ` #${w.numero}` : '';
 
                 const embed = new EmbedBuilder()
                     .setTitle(`✨ Invocation !`)
                     .setDescription(`*${w.description ? w.description.substring(0, 300) + '...' : 'Une entité mystérieuse émerge de la machine...'}*`)
                     .addFields(
-                        { name: '🌸 Waifu', value: `**${w.nom}${numLabel}**`, inline: true },
+                        { name: '🌸 Waifu', value: `**${w.nom}**${w.index > 1 ? ` #${w.index}` : ''}`, inline: true },
                         { name: `${rareteInfo.emoji} Rareté`, value: rareteInfo.nom, inline: true },
                         { name: '🌍 Univers', value: w.univers || 'Inconnu', inline: true },
                         { name: '❤️ HP', value: `${w.stats.hp}`, inline: true },
@@ -110,27 +109,22 @@ module.exports = {
                     .setColor(rareteInfo.couleur)
                     .setFooter({ text: `🗝️ Clés restantes : ${player.cles}` });
 
-                if (imageDoc?.url) embed.setImage(imageDoc.url);
-
+                if (imageDoc) embed.setImage(imageDoc.url);
                 return interaction.editReply({ embeds: [embed] });
 
             } else {
                 let description = '';
                 for (const w of waifusObtenues) {
                     const rareteInfo = RARETES[w.rarete] || RARETES['COMMUNE'];
-                    const numLabel = w.numero > 1 ? ` #${w.numero}` : '';
-                    description += `${rareteInfo.emoji} **${w.nom}${numLabel}** (${w.univers || 'Inconnu'}) — ${rareteInfo.nom}\n`;
+                    description += `${rareteInfo.emoji} **${w.nom}**${w.index > 1 ? ` #${w.index}` : ''} (${w.univers || 'Inconnu'}) — ${rareteInfo.nom}\n`;
                 }
-
                 const embed = new EmbedBuilder()
                     .setTitle(`✨ Invocation x10 !`)
                     .setDescription(description)
                     .setColor(0xFFD700)
                     .setFooter({ text: `🗝️ Clés restantes : ${player.cles}` });
-
                 return interaction.editReply({ embeds: [embed] });
             }
-
         } catch (error) {
             console.error(error);
             await interaction.editReply('❌ Une erreur est survenue !');

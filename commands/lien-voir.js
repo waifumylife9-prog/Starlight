@@ -2,6 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const Waifu = require('../models/Waifu');
 const WaifuImage = require('../models/WaifuImage');
 const { RARETES, LIENS } = require('../config');
+const resolveWaifu = require('../utils/resolveWaifu');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -12,7 +13,7 @@ module.exports = {
                 .setDescription('Voir le niveau de lien avec une waifu')
                 .addStringOption(opt =>
                     opt.setName('nom')
-                        .setDescription('Le nom de ta waifu')
+                        .setDescription('Le nom de ta waifu (ex: Amber ou Amber #2)')
                         .setRequired(true))),
 
     async execute(interaction) {
@@ -25,13 +26,8 @@ module.exports = {
             if (sub === 'voir') {
                 const nom = interaction.options.getString('nom');
 
-                const waifu = await Waifu.findOne({
-                    proprietaire: userId,
-                    nom: { $regex: nom, $options: 'i' },
-                    estVivante: true,
-                });
-
-                if (!waifu) return interaction.editReply(`❌ Tu n'as pas de waifu nommée **${nom}** !`);
+                const { waifu, erreur } = await resolveWaifu(userId, nom);
+                if (erreur) return interaction.editReply(erreur);
 
                 const lienPoints = waifu.lien || 0;
 
@@ -69,8 +65,10 @@ module.exports = {
                     ? `<t:${Math.floor(new Date(waifu.dernierInteraction).getTime() / 1000)}:R>`
                     : 'Jamais';
 
+                const nomAffiche = waifu.index > 1 ? `${waifu.nom} #${waifu.index}` : waifu.nom;
+
                 const embed = new EmbedBuilder()
-                    .setTitle(`💞 Lien avec ${waifu.nom}`)
+                    .setTitle(`💞 Lien avec ${nomAffiche}`)
                     .setColor(rareteInfo.couleur)
                     .setDescription(`${stadeActuel.coeurs}\n**${stadeActuel.nom}**`)
                     .addFields(
